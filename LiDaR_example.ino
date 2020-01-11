@@ -2,7 +2,7 @@
  * Creator: Pololu
  * Modified by: Pascal Urban
  * Last modified on Date: 11.01.2020
- * Description: Basic script to read the data of two VL53L1X sensors 
+ * Description: Basic script to read the data of three VL53L1X sensors 
  *              and calculate the average value. 
  *              It's designed to run a NodeMCU ESP32.
 */
@@ -15,15 +15,18 @@
 // used to reset the sensors
 #define XSHUT1 D3
 #define XSHUT2 D8
+#define XSHUT3 D5
 
 // create instance of sensor class
 VL53L1X sensor1;
 VL53L1X sensor2;
+VL53L1X sensor3;
 
 // calculated average value
 // used to smooth the values
 float avgvalue1 = 0;
 float avgvalue2 = 0;
+float avgvalue3 = 0;
 
 // number of the iterations needed to calculate average
 int n = 2^15-1;
@@ -40,8 +43,10 @@ void setup()
   // pull down XSHUT to reset the sensor
   pinMode(XSHUT1, OUTPUT);
   pinMode(XSHUT2, OUTPUT);
+  pinMode(XSHUT3, OUTPUT);
   digitalWrite(XSHUT1, LOW);
   digitalWrite(XSHUT2, LOW);
+  digitalWrite(XSHUT3, LOW);
 
   // -----------------------
   // start setup of sensor 1
@@ -70,7 +75,7 @@ void setup()
   sensor1.setMeasurementTimingBudget(50000);
 
 
-  // Start continuous readings at a rate of one measurement every 50 ms (the
+  // Start continuous readings at a rate of one measurement every 500 ms (the
   // inter-measurement period). This period should be at least as long as the
   // timing budget.
   sensor1.startContinuous(500);
@@ -94,8 +99,26 @@ void setup()
   };
   sensor2.setDistanceMode(VL53L1X::Long);
   sensor2.setMeasurementTimingBudget(50000);
-  sensor1.setAddress(43);
+  sensor2.setAddress(43);
   sensor2.startContinuous(500);
+
+    // -----------------------
+  // start setup of sensor 3
+  // -----------------------
+  //simular to sensor 
+  
+  sensor3.setTimeout(500);
+  digitalWrite(XSHUT3, HIGH);
+  
+  if (!sensor3.init())
+  {
+    Serial.println("Failed to detect and initialize sensor 2!");
+    while (1);
+  };
+  sensor3.setDistanceMode(VL53L1X::Long);
+  sensor3.setMeasurementTimingBudget(50000);
+  sensor3.setAddress(44);
+  sensor3.startContinuous(500);
 }
 
 void loop()
@@ -103,15 +126,12 @@ void loop()
   // start the reading process
   sensor1.read();
   sensor2.read();
-
-  // initial value
-  if(avgvalue1 == 0){
-    avgvalue1 = float(sensor1.ranging_data.range_mm);
-  }
+  sensor3.read();
 
   // smooth the values
   avgvalue1 = (avgvalue1*(n-1) + float(sensor1.ranging_data.range_mm)) / n;
   avgvalue2 = (avgvalue2*(n-1) + float(sensor2.ranging_data.range_mm)) / n;
+  avgvalue3 = (avgvalue3*(n-1) + float(sensor3.ranging_data.range_mm)) / n;
 
 
   // print the values on a serial console
@@ -135,5 +155,17 @@ void loop()
   Serial.print(" - ");
   Serial.print(" ambient: ");
   Serial.print(sensor2.ranging_data.ambient_count_rate_MCPS);
+  Serial.println();
+
+  
+  Serial.print("Sensor 3: ");
+  Serial.print("range: ");
+  Serial.print(sensor3.ranging_data.range_mm);
+  Serial.print(" - ");
+  Serial.print(" average: ");
+  Serial.print(avgvalue3);
+  Serial.print(" - ");
+  Serial.print(" ambient: ");
+  Serial.print(sensor3.ranging_data.ambient_count_rate_MCPS);
   Serial.println();
 }
