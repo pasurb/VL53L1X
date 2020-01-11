@@ -115,7 +115,7 @@ void loop()
 
 
   // print the values on a serial console
-  Serial.print("Sensor 2: ");
+  Serial.print("Sensor 1: ");
   Serial.print("range: ");
   Serial.print(sensor1.ranging_data.range_mm);
   Serial.print(" - ");
