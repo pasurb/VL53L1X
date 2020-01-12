@@ -1,4 +1,4 @@
-/* Name: LiDar example
+/* Name: ambient
  * Creator: Pololu
  * Modified by: Pascal Urban
  * Last modified on Date: 11.01.2020
@@ -41,6 +41,8 @@ float avg_ambient3 = 0;
 // number of the iterations needed to calculate average
 int n = 2^15-1;
 
+int count = 0;
+
 
 void setup()
 {
@@ -75,7 +77,7 @@ void setup()
   }
 
   // setup distance mode
-  sensor1.setDistanceMode(VL53L1X::Long);
+  sensor1.setDistanceMode(VL53L1X::Medium);
 
   // setup Measurement Timing Budget
   // Use long distance mode and allow up to 50000 us (50 ms) for a measurement.
@@ -97,7 +99,7 @@ void setup()
   // -----------------------
   // start setup of sensor 2
   // -----------------------
-  //simular to sensor 
+  //similar to sensor 
   
   sensor2.setTimeout(500);
   digitalWrite(XSHUT2, HIGH);
@@ -107,7 +109,7 @@ void setup()
     Serial.println("Failed to detect and initialize sensor 2!");
     while (1);
   };
-  sensor2.setDistanceMode(VL53L1X::Long);
+  sensor2.setDistanceMode(VL53L1X::Medium);
   sensor2.setMeasurementTimingBudget(50000);
   sensor2.setAddress(43);
   sensor2.startContinuous(50);
@@ -115,7 +117,7 @@ void setup()
     // -----------------------
   // start setup of sensor 3
   // -----------------------
-  //simular to sensor 
+  //similar to sensor 
   
   sensor3.setTimeout(500);
   digitalWrite(XSHUT3, HIGH);
@@ -147,77 +149,76 @@ void loop()
       avgvalue1_high = sensor1.ranging_data.range_mm;
     avgvalue1_high = (avgvalue1_high*(n-1) + float(sensor1.ranging_data.range_mm)) / n;
   }
-  else
+  else {
+    if (avgvalue1_low == 0)
+      avgvalue1_low = sensor1.ranging_data.range_mm;
     avgvalue1_low = (avgvalue1_low*(n-1) + float(sensor1.ranging_data.range_mm)) / n;
+  }
     
   if (sensor2.ranging_data.ambient_count_rate_MCPS > AMBIENT_THRESHOLD){
     if (avgvalue2_high == 0)
       avgvalue2_high = sensor1.ranging_data.range_mm;
     avgvalue2_high = (avgvalue2_high*(n-1) + float(sensor2.ranging_data.range_mm)) / n;
   }
-  else
+  else{
+    if (avgvalue2_low == 0)
+      avgvalue2_low = sensor1.ranging_data.range_mm;
     avgvalue2_low = (avgvalue2_low*(n-1) + float(sensor2.ranging_data.range_mm)) / n;
+  }
 
   if (sensor3.ranging_data.ambient_count_rate_MCPS > AMBIENT_THRESHOLD){
     if (avgvalue3_high == 0)
       avgvalue3_high = sensor1.ranging_data.range_mm;
     avgvalue3_high = (avgvalue3_high*(n-1) + float(sensor3.ranging_data.range_mm)) / n;
     }
-  else
+  else{
+    if (avgvalue3_high == 0)
+      avgvalue3_high = sensor1.ranging_data.range_mm;
     avgvalue3_low = (avgvalue3_low*(n-1) + float(sensor3.ranging_data.range_mm)) / n;
+  }
 
-
-  // print the values on a serial console
-  Serial.print("Sensor 1: ");
-  Serial.print(" average low: ");
-  Serial.print(avgvalue1_low);
-  Serial.print(" - ");
-  Serial.print(" average high: ");
-  Serial.print(avgvalue1_high);
-  Serial.print(" - ");
-  Serial.print(" ambient avg: ");
-  Serial.print(avg_ambient1);
-  Serial.print(" - ");
-  Serial.print("range: ");
-  Serial.print(sensor1.ranging_data.range_mm);
-  Serial.print(" - ");
-  Serial.print(" ambient: ");
-  Serial.print(sensor1.ranging_data.ambient_count_rate_MCPS);
-  Serial.println();
+  // just print every x * 50 ms
+  if (count%10 == 0){
+    // print the values on a serial console
+    Serial.print("Sensor 1: ");
+    Serial.print(" average low: ");
+    Serial.print(avgvalue1_low);
+    Serial.print(" - average high: ");
+    Serial.print(avgvalue1_high);
+    Serial.print(" - ambient avg: ");
+    Serial.print(avg_ambient1);
+    Serial.print(" - range: ");
+    Serial.print(sensor1.ranging_data.range_mm);
+    Serial.print(" - ambient: ");
+    Serial.print(sensor1.ranging_data.ambient_count_rate_MCPS);
+    Serial.println();
   
-  Serial.print("Sensor 2: ");
-  Serial.print(" average low: ");
-  Serial.print(avgvalue2_low);
-  Serial.print(" - ");
-  Serial.print(" average high: ");
-  Serial.print(avgvalue2_high);
-  Serial.print(" - ");
-  Serial.print(" ambient avg: ");
-  Serial.print(avg_ambient2);
-  Serial.print(" - ");
-  Serial.print("range: ");
-  Serial.print(sensor2.ranging_data.range_mm);
-  Serial.print(" - ");
-  Serial.print(" ambient: ");
-  Serial.print(sensor2.ranging_data.ambient_count_rate_MCPS);
-  Serial.println();
+    Serial.print("Sensor 2: ");
+    Serial.print(" average low: ");
+    Serial.print(avgvalue2_low);
+    Serial.print(" - average high: ");
+    Serial.print(avgvalue2_high);
+    Serial.print(" - ambient avg: ");
+    Serial.print(avg_ambient2);
+    Serial.print(" - range: ");
+    Serial.print(sensor2.ranging_data.range_mm);
+    Serial.print(" - ambient: ");
+    Serial.print(sensor2.ranging_data.ambient_count_rate_MCPS);
+    Serial.println();
 
   
-  Serial.print("Sensor 3: ");
-  Serial.print(" average low: ");
-  Serial.print(avgvalue3_low);
-  Serial.print(" - ");
-  Serial.print(" average high: ");
-  Serial.print(avgvalue3_high);
-  Serial.print(" - ");
-  Serial.print(" ambient avg: ");
-  Serial.print(avg_ambient3);
-  Serial.print(" - ");
-  Serial.print("range: ");
-  Serial.print(sensor3.ranging_data.range_mm);
-  Serial.print(" - ");
-  Serial.print(" ambient: ");
-  Serial.print(sensor3.ranging_data.ambient_count_rate_MCPS);
-  Serial.println();
-  delay(500);
+    Serial.print("Sensor 3: ");
+    Serial.print(" average low: ");
+    Serial.print(avgvalue3_low);
+    Serial.print(" - average high: ");
+    Serial.print(avgvalue3_high);
+    Serial.print(" - ambient avg: ");
+    Serial.print(avg_ambient3);
+    Serial.print(" - range: ");
+    Serial.print(sensor3.ranging_data.range_mm);
+    Serial.print(" - ambient: ");
+    Serial.print(sensor3.ranging_data.ambient_count_rate_MCPS);
+    Serial.println();
+  }
+  count++;
 }
