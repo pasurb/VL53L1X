@@ -17,6 +17,8 @@
 #define XSHUT2 D8
 #define XSHUT3 D5
 
+#define AMBIENT_THRESHOLD 2
+
 // create instance of sensor class
 VL53L1X sensor1;
 VL53L1X sensor2;
@@ -87,7 +89,7 @@ void setup()
   // -----------------------
   // start setup of sensor 2
   // -----------------------
-  //simular to sensor 
+  //similar to sensor 
   
   sensor2.setTimeout(500);
   digitalWrite(XSHUT2, HIGH);
@@ -105,7 +107,7 @@ void setup()
     // -----------------------
   // start setup of sensor 3
   // -----------------------
-  //simular to sensor 
+  //similar to sensor 
   
   sensor3.setTimeout(500);
   digitalWrite(XSHUT3, HIGH);
@@ -128,6 +130,11 @@ void loop()
   sensor2.read();
   sensor3.read();
 
+  if (sensor1.ranging_data.ambient_count_rate_MCPS > AMBIENT_THRESHOLD or 
+      sensor2.ranging_data.ambient_count_rate_MCPS > AMBIENT_THRESHOLD or 
+      sensor3.ranging_data.ambient_count_rate_MCPS > AMBIENT_THRESHOLD )
+    return;
+    
   // smooth the values
   avgvalue1 = (avgvalue1*(n-1) + float(sensor1.ranging_data.range_mm)) / n;
   avgvalue2 = (avgvalue2*(n-1) + float(sensor2.ranging_data.range_mm)) / n;
